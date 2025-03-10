@@ -1,0 +1,84 @@
+---
+
+
+main:
+  root_dir:          '.\calib'
+  pixel_pupil:       80
+  pixel_pitch:       1e-04
+  total_time:        2401.0
+  time_step:         1.0
+  display_server:    false
+
+pupilstop:
+  class: 'Pupilstop'
+  input_mask_data: 'mask80_g0125_0deg'
+  
+ramp:
+  class: 'FuncGenerator'
+  func_type: 'LINEAR'
+  slope: [5]
+  constant: [-6000]
+                
+on_axis_source:
+  class:             'Source'
+  polar_coordinate:  [0.0, 0.0]
+  magnitude:         8
+  wavelengthInNm:    500
+
+prop:
+  class: 'AtmoPropagation'
+  source_dict_ref: ['on_axis_source']
+  inputs:
+    layer_list: ['pupilstop', 'dm.out_layer']
+  outputs: ['out_on_axis_source_ef']
+
+ifunc:
+  class: 'IFunc'
+  ifunc_data: 'ifunc_piston_80'
+  mask_data: 'mask_piston_80'
+
+dm:
+  class: 'DM'
+  ifunc_ref: 'ifunc'
+  height: 0
+  inputs:
+      in_command: 'ramp.output'
+  outputs:  ['out_layer']
+
+psf720:
+  class: 'PSF'
+  wavelengthInNm: 720
+  nd: 13.563200
+  start_time: 0.
+  inputs:
+      in_ef: 'prop.out_on_axis_source_ef'
+  outputs: ['out_psf']
+
+psf725:
+  class: 'PSF'
+  wavelengthInNm: 725
+  nd: 13.657389
+  start_time: 0.
+  inputs:
+      in_ef: 'prop.out_on_axis_source_ef'
+  outputs: ['out_psf']
+
+psf730:
+  class: 'PSF'
+  wavelengthInNm: 730
+  nd: 13.751578
+  start_time: 0.
+  inputs:
+      in_ef: 'prop.out_on_axis_source_ef'
+  outputs: ['out_psf']
+
+
+data_store:
+  class: 'DataStore'
+  store_dir: 'G:/Shared drives/PNRR-OAA/STILES/WP5000/Integration/SPL/Specula'
+  inputs:
+    input_list: [
+      'psf720-psf720.out_psf',
+      'psf725-psf725.out_psf',
+      'psf730-psf730.out_psf',
+    ]
