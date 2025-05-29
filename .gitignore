@@ -1,0 +1,15 @@
+*.fits 
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.sh
+*.npy
+*.npz
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
