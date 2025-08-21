@@ -6,7 +6,11 @@ import plico_motor
 
 
 class PlicoMotor(BaseProcessingObj):
-    '''Interface to Plico Motor'''
+    '''
+    Interface to Plico Motor.
+
+    Can be used to drive a motor, or to read its position, or both
+    '''
 
     def __init__(self,
                  host: str,
@@ -18,7 +22,7 @@ class PlicoMotor(BaseProcessingObj):
         super().__init__(target_device_idx=target_device_idx, precision=precision)
 
         self.motor = plico_motor.motor(host, port, axis)
-        self.inputs['in_position'] = InputValue(type=BaseValue)
+        self.inputs['in_position'] = InputValue(type=BaseValue, optional=True)
         self.outputs['out_position'] = BaseValue(desc='Motor position', target_device_idx=target_device_idx)
 
     def trigger_code(self):
