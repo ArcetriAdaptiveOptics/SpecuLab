@@ -1,5 +1,6 @@
 from specula.base_processing_obj import BaseProcessingObj
 from specula.base_value import BaseValue
+from specula.data_objects.slopes import Slopes
 
 import plico_interferometer
 
@@ -16,13 +17,19 @@ class PlicoInterferometer(BaseProcessingObj):
         super().__init__(target_device_idx=target_device_idx, precision=precision)
 
         self.interf = plico_interferometer.interferometer(host, port)
-        self.outputs['out_wavefront'] = BaseValue(desc='wavefront', target_device_idx=target_device_idx)
+        self.outputs['out_wavefront'] = BaseValue(description='wavefront', target_device_idx=target_device_idx)
+        self.outputs['out_slopes'] = Slopes(2, target_device_idx=target_device_idx)
 
     def trigger_code(self):
         wf = self.interf.wavefront()
-        self.outputs.value = wf
+        self.outputs['out_wavefront'].value = wf
+
+        data1d = wf.filled(0).ravel()
+        self.outputs['out_slopes'].resize(len(data1d))
+        print(wf.shape, data1d.shape)
+        self.outputs['out_slopes'].slopes = data1d
 
     def post_trigger(self):
-        self.outputs.generation_time = self.current_time
-
+        self.outputs['out_wavefront'].generation_time = self.current_time
+        self.outputs['out_slopes'].generation_time = self.current_time
 

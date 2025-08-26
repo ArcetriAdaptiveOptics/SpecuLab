@@ -26,7 +26,7 @@ class PlicoMotor(BaseProcessingObj):
         self.outputs['out_position'] = BaseValue(desc='Motor position', target_device_idx=target_device_idx)
 
     def trigger_code(self):
-        target_pos = self.local_inputs['in_position']
+        target_pos = self.local_inputs['in_position'].value
         if target_pos is not None:
             self.motor.move_to(target_pos)
 
