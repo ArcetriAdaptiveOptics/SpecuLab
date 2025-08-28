@@ -11,12 +11,16 @@ class PlicoInterferometer(BaseProcessingObj):
     def __init__(self,
                  host: str,
                  port: int,
+                 use_4sight_client: bool=False,
                  target_device_idx=None,
                  precision=None
                 ):
         super().__init__(target_device_idx=target_device_idx, precision=precision)
 
-        self.interf = plico_interferometer.interferometer(host, port)
+        if use_4sight_client:
+            self.interf = plico_interferometer.interferometer_4SightFocus_client(host, port)
+        else:
+            self.interf = plico_interferometer.interferometer(host, port)
         self.outputs['out_wavefront'] = BaseValue(description='wavefront', target_device_idx=target_device_idx)
         self.outputs['out_slopes'] = Slopes(2, target_device_idx=target_device_idx)
 

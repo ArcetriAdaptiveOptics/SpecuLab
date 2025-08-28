@@ -1,0 +1,37 @@
+---
+
+main:
+  class:             'SimulParams'
+  root_dir:          './calib/cascading'         # Root directory for calibration manager  
+  pixel_pupil:       160                    # Linear dimension of pupil phase array
+  pixel_pitch:       0.05                   # [m] Pitch of the pupil phase array
+  total_time:        0.050                  # [s] Total simulation running time
+  time_step:         0.001                  # [s] Simulation time step
+  add_modules:       ['speculab']
+
+pushpull:
+  class:     'PushPullGenerator'
+  nmodes:     820
+  amp:        0.2
+  outputs: ['output']
+
+alpao820dm:
+  class:             'PlicoDM'
+  host:              'localhost'
+  port:              7010
+  inputs:
+      in_commands: 'pushpull.output'
+
+phasecam:
+  class:             'PlicoInterferometer'
+  host:              '193.206.155.219'
+  port:              8011
+  use_4sight_client: true
+  outputs: ['out_wavefront']
+
+data_store:
+  class:             'DataStore'
+  store_dir:         './output'             # Data result directory: 'store_dir'/TN/
+  inputs:    
+    input_list: [ 'cmd-pushpull.output',
+                   'wavefront-phasecam.out_wavefront']
