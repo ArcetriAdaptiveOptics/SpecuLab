@@ -36,6 +36,7 @@ class PlicoDM(BaseProcessingObj):
         self.ifunc_inv = ifunc_inv
         self.inputs['in_commands'] = InputValue(type=BaseValue, optional=True)
         self.inputs['in_ef'] = InputValue(type=BaseValue, optional=True)
+        self.outputs['out_trigger'] = BaseValue(target_device_idx=target_device_idx)
 
     def trigger_code(self):
         in_commands = self.local_inputs['in_commands']
@@ -48,6 +49,10 @@ class PlicoDM(BaseProcessingObj):
             ef = self.local_inputs['in_ef']
             commands = ef.phaseInNm @ self.ifunc_ivn
             self.dm.set_shape(commands)
+        
+    def post_trigger(self):
+        self.outputs['out_trigger'].value = 1
+        self.outputs['out_trigger'].generation_time = self.current_time
 
     def setup(self):
         cmd = self.inputs['in_commands'].get(self.target_device_idx)
