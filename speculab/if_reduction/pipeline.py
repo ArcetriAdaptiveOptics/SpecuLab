@@ -43,7 +43,6 @@ def load_all_files(path: os.PathLike) -> Iterator:
     '''Load FITS data from all filenames matching a given path pattern'''
     path = 'alpao820if/20250829_150620*/wavefront.fits'
     filelist = glob.glob(path)
-    print(filelist)
     for filename in sorted(filelist, key=lambda x: int(os.path.dirname(x).split('_')[-1])):
         print('Generating:', filename)
         data = fits.getdata(filename)
@@ -64,7 +63,6 @@ def cube_diff(images: Iterator, preview=False) -> Iterator:
 
 def smooth_image(image):
     '''Gaussian 2D smoothing'''
-    print('Smoothing image')
     kernel = Gaussian2DKernel(x_stddev=2)
     return convolve_fft(image, kernel, boundary='full', nan_treatment='interpolate')
 
@@ -91,7 +89,7 @@ def apply_mask(image, maskpath: os.PathLike):
 def threshold(image, th_level: float=0.1):
     '''Threshold an image'''
     valid = ~np.isnan(image)
-    image -= (image * valid).max() * th_level
+    image = image - (image * valid).max() * th_level
     positive = (image > 0).astype(int)
     return image * positive
 
@@ -99,7 +97,6 @@ def threshold(image, th_level: float=0.1):
 def crop_and_resize(image, rows: int, cols: int):
     '''Crop image to illuminated portion and resize to target shape'''
     cropped = _crop_to_valid(image)
-    print(cropped)
     return resize(cropped, (rows, cols), order=3, mode="reflect", anti_aliasing=True, preserve_range=True)
 
 
@@ -111,7 +108,7 @@ def stack_images(images: Iterator, save_path: os.PathLike=None, preview=False):
         stack = np.stack(list(images))
     if save_path:
         fits.writeto(save_path, stack, overwrite=True)
-        print(f'Stack saved to {save_path}')
+        print(f'Stack saved to {save_path}')    
 
 
 

@@ -1,7 +1,7 @@
 
-from itertools import islice, tee
 import os
-
+from itertools import islice, tee
+from functools import partial
 import pathos.multiprocessing as mp
 from functools import wraps
 
@@ -42,9 +42,10 @@ def parallel_yield(processes=None, chunksize=1):
     else:
         def decorator(func):
             @wraps(func)
-            def wrapper(stream):
+            def wrapper(stream, **kwargs):
+                partial_func = partial(func, **kwargs)
                 with mp.Pool(processes=processes or mp.cpu_count()) as pool:
-                    for result in pool.imap(func, stream, chunksize=chunksize):
+                    for result in pool.imap(partial_func, stream, chunksize=chunksize):
                         yield result
             return wrapper
         return decorator
@@ -135,11 +136,11 @@ def load_custom_function(filename, func_name):
         raise FileNotFoundError(f"{filename} not found.")
 
 
-def run_pipeline(func_list, params_dicts, preview=False, callback=None):
+def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=None, check_interrupt_callback=None):
     '''Run a sequence of functions as a pipeline'''
     gen = None
 
-    for func, params in zip(func_list, params_dicts):
+    for func, params, flags in zip(func_list, params_dicts, flag_list):
         func_type = classify_function(func)
         print(f'Running step: {func.__name__} ({func_type})')
         sig = {k:v for k, v in inspect.signature(func).parameters.items()}
@@ -154,15 +155,22 @@ def run_pipeline(func_list, params_dicts, preview=False, callback=None):
         elif func_type == 'sink' and gen is None:
                 raise ValueError(f"Sink function {func.__name__} requires an input generator.")
 
-        if func_type == 'source':
-            gen = func(**params)
-        elif func_type == 'transform':
-            gen = func(gen, **params)
+        # Apply multiprocesing if enabled, whcih makes the function a generator as a side-effect
+        if flags.get('mp_enabled', False):
+            f = parallel_yield()(func)
         elif func_type == 'generic':
             f = wrap_as_generator(func)
+        else:
+            f = func
+
+        if func_type == 'source':
+            gen = f(**params)
+        elif func_type == 'transform':
+            gen = f(gen, **params)
+        elif func_type == 'generic':
             gen = f(gen, **params)
         elif func_type == 'sink':
-            output = func(gen, **params)
+            output = f(gen, **params)
             gen = None  # End of pipeline after sink
             if callback:
                 callback({func: output})
@@ -171,8 +179,25 @@ def run_pipeline(func_list, params_dicts, preview=False, callback=None):
             raise ValueError(f"Function {func.__name__} has an unsupported type: {func_type}.")
 
         if callback:
+            # Callback at each single iteration to display all intermediate results
+            # def call_the_callback(stream, this_func):
+            #     for item in stream:
+            #         callback({this_func: item if func_type != 'source' else None})
+            #         yield item
+            # gen = call_the_callback(gen, func)
+
+            # Callback only on the first item of each step
             gen, preview_gen = tee(gen)
             callback({func: list(islice(preview_gen, 1))[0] if func_type != 'source' else None})
+
+        if check_interrupt_callback:
+            def check_callback(stream):
+                for item in stream:
+                    if check_interrupt_callback():
+                        print("Pipeline interrupted by user.")
+                        break
+                    yield item
+            gen = check_callback(gen)
 
     if gen is not None:
         print("Warning: Pipeline ended without a sink function. Consuming remaining generator.")

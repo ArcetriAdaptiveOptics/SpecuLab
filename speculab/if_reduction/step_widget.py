@@ -71,7 +71,8 @@ class StepWidget(QWidget):
             if data.ndim == 1:
                 ax.plot(data)
             elif data.ndim == 2:
-                ax.imshow(data)
+                im = ax.imshow(data)
+                ax.figure.colorbar(im, ax=ax)
         ax.figure.canvas.draw()
 
     def update_preview(self, data):
@@ -80,10 +81,8 @@ class StepWidget(QWidget):
         ax = self.figure.clear()
         ax = self.figure.add_subplot(111)
         self._plot_to_ax(ax, data)
-#        self.canvas.draw()
 
     def _on_preview_clicked(self, event):
-        print('Preview clicked')
         if self.preview_data is None:
             return
         self._open_large_preview()
@@ -103,7 +102,6 @@ class StepWidget(QWidget):
         ax = fig.add_subplot(111)
         data = self.preview_data
         self._plot_to_ax(ax, data)
-#        canvas.draw()
 
         dlg.show()
 
@@ -112,6 +110,7 @@ class StepWidget(QWidget):
             "enabled": self.enable_checkbox.isChecked(),
             "file": self.function_selector.get_selected_file(),
             "function": self.function_selector.get_selected_function(),
+            "mp_enabled": self.function_selector.get_mp_enabled(),
             "forms": {
                 fname: form.get_values()
                 for fname, form in self.forms.items()
@@ -125,10 +124,12 @@ class StepWidget(QWidget):
         # Restore selected file & function
         file_path = state.get("file")
         func_name = state.get("function")
+        mp_enabled = state.get("mp_enabled", False)
 
         # Set file and update available functions
         self.function_selector.set_selected_file(file_path)
         self.function_selector.set_selected_function(func_name)
+        self.function_selector.set_mp_enabled(mp_enabled)
 
         # Restore all form states if present
         form_states = state.get("forms", {})

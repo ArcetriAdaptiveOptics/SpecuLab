@@ -59,6 +59,9 @@ class FunctionRunner(QThread):
 
 
 class MainWindow(QMainWindow):
+
+    callback_signal = pyqtSignal(dict)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Pipeline Editor")
@@ -90,6 +93,11 @@ class MainWindow(QMainWindow):
         self.run_pipeline_btn.clicked.connect(self.run_pipeline)
         layout.addWidget(self.run_preview_btn)
         layout.addWidget(self.run_pipeline_btn)
+
+        self.interrupt_btn = QPushButton("Interrupt")
+        self.interrupt_btn.setEnabled(False)  # initially disabled
+        self.interrupt_btn.clicked.connect(self._interrupt_pipeline)
+        layout.addWidget(self.interrupt_btn)
 
         self.setCentralWidget(central_widget)
 
@@ -139,6 +147,7 @@ class MainWindow(QMainWindow):
         self.stdout_stream.textWritten.connect(self._append_log)
         self.stderr_stream.textWritten.connect(self._append_log)
 
+        self.callback_signal.connect(self._update_step_previews)
         # Start with one default step
         self.add_step()
         self._append_log('Pipeline editor initialized.\n')
@@ -157,8 +166,18 @@ class MainWindow(QMainWindow):
         self.runner = FunctionRunner(func, *args, **kwargs)
         self.runner.log_signal.connect(self._append_log)
         self.runner.finished_signal.connect(lambda res: print("Function finished:", res))
+        self.runner.finished_signal.connect(lambda: self.run_pipeline_btn.setEnabled(True))
+        self.runner.finished_signal.connect(lambda: self.run_preview_btn.setEnabled(True))
+        self.runner.finished_signal.connect(lambda: self.interrupt_btn.setEnabled(False))
         self.runner.start()
 
+    def _interrupt_pipeline(self):
+        if self.runner.isRunning():
+            self.runner.requestInterruption()
+
+    def check_interrupt_callback(self):
+        return self.runner.isInterruptionRequested()
+    
     def add_step(self, state=None, row=None):
         step = StepWidget(initial_file='pipeline.py')
         if state:
@@ -274,6 +293,7 @@ class MainWindow(QMainWindow):
     def get_pipeline_functions_and_args(self):
         funcs = []
         args_list = []
+        flag_list = []
 
         for i in range(self.step_list.count()):
             item = self.step_list.item(i)
@@ -284,6 +304,7 @@ class MainWindow(QMainWindow):
 
             func_name = step.function_selector.get_selected_function()
             func_obj = step.function_selector.get_function_object(func_name)
+            mp_enabled = step.function_selector.get_mp_enabled()
             if func_obj is None:
                 continue
 
@@ -296,8 +317,9 @@ class MainWindow(QMainWindow):
 
             funcs.append(func_obj)
             args_list.append(args)
+            flag_list.append({'mp_enabled': mp_enabled})
 
-        return funcs, args_list
+        return funcs, args_list, flag_list
 
     def update_step_previews(self, preview_results):
         """
@@ -309,6 +331,10 @@ class MainWindow(QMainWindow):
             Keys are function objects, values are preview data (list or array).
             Example: {func_obj_0: [1,2,3], func_obj_1: [4,5,6]}
         """
+        self.callback_signal.emit(preview_results)
+
+    def _update_step_previews(self, preview_results):
+
         for i in range(self.step_list.count()):
             item = self.step_list.item(i)
             step = self.step_list.itemWidget(item)
@@ -321,13 +347,17 @@ class MainWindow(QMainWindow):
                 step.update_preview(preview_results[func_obj])
 
     def _run_pipeline(self, preview=False):
-        func_list, args_list = window.get_pipeline_functions_and_args()
-        for f, args in zip(func_list, args_list):
-            print(f.__name__, args)
-        run_pipeline(func_list, args_list, preview=preview, callback=self.update_step_previews)
+        func_list, args_list, flag_list = window.get_pipeline_functions_and_args()
+        for f, args, flags in zip(func_list, args_list, flag_list):
+            print(f.__name__, args, flags)
+        run_pipeline(func_list, args_list, flag_list, preview=preview, callback=self.update_step_previews, check_interrupt_callback=self.check_interrupt_callback)
 
     def run_preview(self):
         """Run the pipeline preview using the background runner."""
+        # Disable the button while running
+        self.run_preview_btn.setEnabled(False)
+        self.run_pipeline_btn.setEnabled(False)
+        self.interrupt_btn.setEnabled(True)
         for i in range(self.step_list.count()):
             item = self.step_list.item(i)
             step = self.step_list.itemWidget(item)
@@ -336,6 +366,9 @@ class MainWindow(QMainWindow):
 
     def run_pipeline(self):
         """Run the full pipeline using the background runner."""
+        self.run_preview_btn.setEnabled(False)
+        self.run_pipeline_btn.setEnabled(False)
+        self.interrupt_btn.setEnabled(True)
         self.run_any_function(lambda: self._run_pipeline(preview=False))
 
 if __name__ == "__main__":

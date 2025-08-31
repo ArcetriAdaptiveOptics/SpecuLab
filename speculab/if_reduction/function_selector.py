@@ -4,8 +4,12 @@ import importlib.util
 from PyQt5.QtCore import pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QComboBox,
-    QVBoxLayout, QHBoxLayout, QFileDialog
+    QVBoxLayout, QHBoxLayout, QFileDialog, QCheckBox
 )
+
+
+# TODO show in the combobox the type of function (sink, source, transform, generic)
+# especially sink and sources
 
 class FunctionSelector(QWidget):
     functionSelected = pyqtSignal(str, object)  # (func_name, func_obj)
@@ -38,8 +42,11 @@ class FunctionSelector(QWidget):
         self.func_combo = QComboBox()
         self.func_combo.currentTextChanged.connect(self._on_function_selected)
 
+        self.mp_checkbox = QCheckBox("Enable multiprocessing")
+
         layout.addLayout(file_layout)
         layout.addWidget(self.func_combo)
+        layout.addWidget(self.mp_checkbox)
 
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select Python File", "", "Python Files (*.py)")
@@ -69,6 +76,12 @@ class FunctionSelector(QWidget):
 
     def get_selected_file(self):
         return self.current_file
+
+    def get_mp_enabled(self):
+        return self.mp_checkbox.isChecked()
+
+    def set_mp_enabled(self, enabled: bool):
+        self.mp_checkbox.setChecked(enabled)
 
     def _load_functions(self):
         """Dynamically import the module and list all top-level functions."""

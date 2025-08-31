@@ -106,6 +106,7 @@ class FunctionForm(QWidget):
         if hint == int:
             widget = QSpinBox()
             widget.setMaximum(999999)
+            widget.setMinimum(-999999)
             if default is not inspect.Parameter.empty:
                 widget.setValue(default)
             return widget
@@ -113,6 +114,7 @@ class FunctionForm(QWidget):
         elif hint == float:
             widget = QDoubleSpinBox()
             widget.setMaximum(1e9)
+            widget.setMinimum(-1e9)
             widget.setDecimals(6)
             if default is not inspect.Parameter.empty:
                 widget.setValue(default)
