@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy, QDialog
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
 from matplotlib.figure import Figure
 
 from function_selector import FunctionSelector
@@ -95,13 +96,17 @@ class StepWidget(QWidget):
         dlg.resize(800, 600)
 
         vbox = QVBoxLayout(dlg)
+
+        # Matplotlib figure and canvas
         fig = Figure(figsize=(6, 4))
+        ax = fig.add_subplot(111)
         canvas = FigureCanvas(fig)
         vbox.addWidget(canvas)
 
-        ax = fig.add_subplot(111)
-        data = self.preview_data
-        self._plot_to_ax(ax, data)
+        # Navigation toolbar (zoom, pan, save, etc.)
+        toolbar = NavigationToolbar2QT(canvas, self)
+        vbox.addWidget(toolbar)
+        self._plot_to_ax(ax, self.preview_data)
 
         dlg.show()
 

@@ -1,5 +1,4 @@
 
-import os
 from itertools import islice, tee
 from functools import partial
 import pathos.multiprocessing as mp
@@ -7,7 +6,6 @@ from functools import wraps
 
 import inspect
 from typing import Iterator, get_type_hints, Any, Literal
-
 
 
 class StartPipe:
@@ -96,48 +94,18 @@ def classify_function(func) -> StepType:
 
     return ftype
 
-import importlib.util
-
-
-def load_predefined_functions(filename="pipeline.py"):
-    '''
-    Load predefined functions from a given Python file.
-    Functions must have been typed with the Iterator type hint
-    either for the first argument (sinks) or the return type (sources), or both (transforms).
-    '''
-    functions = {}
-    if not os.path.exists(filename):
-        raise FileNotFoundError(f"{filename} not found.")
-
-    spec = importlib.util.spec_from_file_location("pipeline", filename)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    for name in dir(module):
-        obj = getattr(module, name)
-        if callable(obj) and name[0].islower() and not name.startswith('_'):
-            functions[name] = obj
-    return functions
-
-predefined_functions = load_predefined_functions("pipeline.py")
-
-
-def load_custom_function(filename, func_name):
-    '''Load a custom function from a given Python file'''
-    if os.path.exists(filename):
-        spec = importlib.util.spec_from_file_location("custom_module", filename)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        if hasattr(module, func_name):
-            return getattr(module, func_name)
-        else:
-            raise ValueError(f'Function {func_name} not found in {filename}')
-    else:
-        raise FileNotFoundError(f"{filename} not found.")
-
 
 def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=None, check_interrupt_callback=None):
-    '''Run a sequence of functions as a pipeline'''
+    '''Run a sequence of functions as a pipeline
+
+    Parameters:
+    func_list: list of functions to run in sequence
+    params_dicts: list of dicts with parameters for each function
+    flag_list: list of dicts with flags for each function (e.g. {'mp_enabled': True})
+    preview: if True, pass preview=True to functions that support it
+    callback: function to call after each step with the current output (e.g. for UI updates)
+    check_interrupt_callback: function to call to check if the pipeline should be interrupted
+    '''
     gen = None
 
     for func, params, flags in zip(func_list, params_dicts, flag_list):
@@ -170,8 +138,7 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=Non
         elif func_type == 'generic':
             gen = f(gen, **params)
         elif func_type == 'sink':
-            output = f(gen, **params)
-            gen = None  # End of pipeline after sink
+            output = f(gen, **params)  # This will consume the generator
             if callback:
                 callback({func: output})
             return output

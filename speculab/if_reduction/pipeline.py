@@ -11,9 +11,6 @@ from skimage.transform import resize
 
 from typing import Iterator
 
-class Params():
-    pass
-params = Params()
 
 # From itertools recipes
 def batched(iterable, n):

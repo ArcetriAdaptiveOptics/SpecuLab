@@ -3,7 +3,7 @@ import yaml
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QListWidget, QListWidgetItem,
     QToolBar, QAction, QFileDialog, QPushButton, QWidget,
-    QVBoxLayout, QMessageBox, QTextEdit, QSizePolicy
+    QVBoxLayout, QTextEdit, QSizePolicy
 )
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
 import PyQt5.QtGui as QtGui
@@ -35,7 +35,6 @@ class FunctionRunner(QThread):
         self.result = None
 
     def run(self):
-        import sys
         # Redirect stdout/stderr in this thread
         class Stream:
             def write(self_inner, text):
@@ -348,13 +347,13 @@ class MainWindow(QMainWindow):
 
     def _run_pipeline(self, preview=False):
         func_list, args_list, flag_list = window.get_pipeline_functions_and_args()
-        for f, args, flags in zip(func_list, args_list, flag_list):
-            print(f.__name__, args, flags)
-        run_pipeline(func_list, args_list, flag_list, preview=preview, callback=self.update_step_previews, check_interrupt_callback=self.check_interrupt_callback)
+        run_pipeline(func_list, args_list, flag_list, preview=preview,
+                     callback=self.update_step_previews,
+                     check_interrupt_callback=self.check_interrupt_callback)
 
     def run_preview(self):
         """Run the pipeline preview using the background runner."""
-        # Disable the button while running
+        # Disable the buttons while running
         self.run_preview_btn.setEnabled(False)
         self.run_pipeline_btn.setEnabled(False)
         self.interrupt_btn.setEnabled(True)
@@ -366,6 +365,7 @@ class MainWindow(QMainWindow):
 
     def run_pipeline(self):
         """Run the full pipeline using the background runner."""
+        # Disable the buttons while running
         self.run_preview_btn.setEnabled(False)
         self.run_pipeline_btn.setEnabled(False)
         self.interrupt_btn.setEnabled(True)
