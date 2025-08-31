@@ -1,0 +1,34 @@
+- enabled: true
+  file: /home/alfio/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    load_all_files:
+      path: /home/alfio/git/SpecuLab/speculab/if_reduction/alpao820if/20250829_150620_0/wavefront.fits
+  function: load_all_files
+- enabled: true
+  file: /home/alfio/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    crop_and_resize:
+      cols: '55'
+      rows: '55'
+    cube_diff: {}
+  function: cube_diff
+- enabled: true
+  file: /home/alfio/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    smooth_image: {}
+  function: smooth_image
+- enabled: true
+  file: /home/alfio/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    stack_images: {}
+    stack_mask:
+      save_path: /home/alfio/git/SpecuLab/speculab/if_reduction/mask.fits
+  function: stack_mask

@@ -6,7 +6,7 @@ import pathos.multiprocessing as mp
 from functools import wraps
 
 import inspect
-from typing import Iterator, get_type_hints, get_origin, Any, Literal
+from typing import Iterator, get_type_hints, Any, Literal
 
 
 
@@ -135,19 +135,17 @@ def load_custom_function(filename, func_name):
         raise FileNotFoundError(f"{filename} not found.")
 
 
-def run_pipeline(func_list, params_lists, preview=False, callback=None):
+def run_pipeline(func_list, params_dicts, preview=False, callback=None):
     '''Run a sequence of functions as a pipeline'''
     gen = None
 
-    for func, params in zip(func_list, params_lists):
+    for func, params in zip(func_list, params_dicts):
         func_type = classify_function(func)
         print(f'Running step: {func.__name__} ({func_type})')
         sig = {k:v for k, v in inspect.signature(func).parameters.items()}
         if 'preview' in sig:
-            kwargs = {'preview': preview}
+            params['preview'] = preview
             del sig['preview']
-        else:
-            kwargs = {}
 
         if func_type == 'source' and gen is not None:
             raise ValueError(f"Source function {func.__name__} cannot follow another function in the pipeline.")
@@ -157,31 +155,30 @@ def run_pipeline(func_list, params_lists, preview=False, callback=None):
                 raise ValueError(f"Sink function {func.__name__} requires an input generator.")
 
         if func_type == 'source':
-            gen = func(*params, **kwargs)
+            gen = func(**params)
         elif func_type == 'transform':
-            gen = func(gen, *params, **kwargs)
+            gen = func(gen, **params)
         elif func_type == 'generic':
             f = wrap_as_generator(func)
-            gen = f(gen, *params, **kwargs)
+            gen = f(gen, **params)
         elif func_type == 'sink':
-            output = func(gen, *params, **kwargs)
+            output = func(gen, **params)
             gen = None  # End of pipeline after sink
             if callback:
-                callback(func.__name__, output)
+                callback({func: output})
             return output
         else:
             raise ValueError(f"Function {func.__name__} has an unsupported type: {func_type}.")
 
         if callback:
             gen, preview_gen = tee(gen)
-            callback(func.__name__, list(islice(preview_gen, 1))[0] if func_type != 'source' else None) 
+            callback({func: list(islice(preview_gen, 1))[0] if func_type != 'source' else None})
 
     if gen is not None:
         print("Warning: Pipeline ended without a sink function. Consuming remaining generator.")
         # Consume final generator
         output = list(gen)
         print(output)
-        print(output.shape)
         return output
 
 
