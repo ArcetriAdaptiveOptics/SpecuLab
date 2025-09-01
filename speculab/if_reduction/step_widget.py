@@ -125,9 +125,7 @@ class StepWidget(QWidget):
         self.enable_checkbox.setChecked(state.get("enabled", True))
 
         # Restore selected file & function
-        file_path = state.get("file")
         func_name = state.get("function")
-        mp_enabled = state.get("mp_enabled", False)
 
         # Set file and update available functions
         self.function_selector.set_state(state)

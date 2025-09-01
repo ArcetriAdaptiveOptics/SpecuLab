@@ -39,6 +39,8 @@ def _crop_to_valid(data):
 def load_all_files(path: os.PathLike) -> Iterator:
     '''Load FITS data from all filenames matching a given path pattern'''
     filelist = glob.glob(path)
+    if len(filelist) == 0:
+        raise FileNotFoundError(path)
     for filename in sorted(filelist, key=lambda x: int(os.path.dirname(x).split('_')[-1])):
         print('Generating:', filename)
         data = fits.getdata(filename)
