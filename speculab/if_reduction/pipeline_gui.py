@@ -301,14 +301,13 @@ class MainWindow(QMainWindow):
             if not step.enable_checkbox.isChecked():
                 continue  # skip disabled steps
 
-            func_name = step.function_selector.get_selected_function()
-            func_obj = step.function_selector.get_function_object(func_name)
-            mp_enabled = step.function_selector.get_mp_enabled()
+            selector_state = step.function_selector.get_state()
+            func_obj = step.function_selector.get_function_object(selector_state["function"])
             if func_obj is None:
                 continue
 
             # Get the arguments from the form corresponding to this function
-            form = step.forms.get(func_name)
+            form = step.forms.get(selector_state["function"])
             if form is None:
                 continue
 
@@ -316,7 +315,7 @@ class MainWindow(QMainWindow):
 
             funcs.append(func_obj)
             args_list.append(args)
-            flag_list.append({'mp_enabled': mp_enabled})
+            flag_list.append({'mp_enabled': selector_state["mp_enabled"]})
 
         return funcs, args_list, flag_list
 
@@ -340,8 +339,8 @@ class MainWindow(QMainWindow):
             if step is None:
                 continue
 
-            func_name = step.function_selector.get_selected_function()
-            func_obj = step.function_selector.get_function_object(func_name)
+            state = step.function_selector.get_state()
+            func_obj = step.function_selector.get_function_object(state["function"])
             if func_obj in preview_results:
                 step.update_preview(preview_results[func_obj])
 

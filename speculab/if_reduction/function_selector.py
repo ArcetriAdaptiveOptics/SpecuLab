@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QFileDialog, QCheckBox
 )
 
+from pipeline_lib import classify_function
 
 # TODO show in the combobox the type of function (sink, source, transform, generic)
 # especially sink and sources
@@ -72,16 +73,21 @@ class FunctionSelector(QWidget):
 
         if self.func_combo.count() > 0:
             self.func_combo.setCurrentIndex(0)
-            self._emit_selected_function()
 
-    def get_selected_file(self):
-        return self.current_file
+        self._emit_selected_function()
 
-    def get_mp_enabled(self):
-        return self.mp_checkbox.isChecked()
+    def get_state(self):
+        func_name = self.func_combo.currentText()
+        return {
+            "file": self.current_file,
+            "function": func_name,
+            "mp_enabled": self.mp_checkbox.isChecked() and self.mp_checkbox.isVisible(),
+        }
 
-    def set_mp_enabled(self, enabled: bool):
-        self.mp_checkbox.setChecked(enabled)
+    def set_state(self, state):
+        self.set_selected_file(state["file"])
+        self.set_selected_function(state["function"])
+        self.mp_checkbox.setChecked(state.get("mp_enabled", False))
 
     def _load_functions(self):
         """Dynamically import the module and list all top-level functions."""
@@ -114,9 +120,11 @@ class FunctionSelector(QWidget):
         func_obj = self.functions.get(func_name)
         if func_obj:
             self.functionSelected.emit(func_name, func_obj)
-
-    def get_selected_function(self):
-        return self.func_combo.currentText()
+            ftype = classify_function(func_obj)
+            if ftype in ["generic"]:
+                self.mp_checkbox.setVisible(True)
+            else:
+                self.mp_checkbox.setVisible(False)
 
     def set_selected_function(self, func_name):
         """Sets the combo selection and emits signal."""

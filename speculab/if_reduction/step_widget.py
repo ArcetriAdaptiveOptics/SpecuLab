@@ -113,13 +113,11 @@ class StepWidget(QWidget):
     def get_state(self):
         return {
             "enabled": self.enable_checkbox.isChecked(),
-            "file": self.function_selector.get_selected_file(),
-            "function": self.function_selector.get_selected_function(),
-            "mp_enabled": self.function_selector.get_mp_enabled(),
             "forms": {
                 fname: form.get_values()
                 for fname, form in self.forms.items()
-            }
+            },
+            **self.function_selector.get_state()
         }
 
     def set_state(self, state):
@@ -132,9 +130,7 @@ class StepWidget(QWidget):
         mp_enabled = state.get("mp_enabled", False)
 
         # Set file and update available functions
-        self.function_selector.set_selected_file(file_path)
-        self.function_selector.set_selected_function(func_name)
-        self.function_selector.set_mp_enabled(mp_enabled)
+        self.function_selector.set_state(state)
 
         # Restore all form states if present
         form_states = state.get("forms", {})

@@ -16,7 +16,6 @@ class Pipe:
 
     def __init__(self, func):
         self.func = func
-        self.func._is_pipe = True    # Mark functions as decorated
 
     def __ror__(self, other):
         # "other" is the input from the left side of the pipe
