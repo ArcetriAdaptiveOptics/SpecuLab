@@ -97,9 +97,12 @@ class FunctionSelector(QWidget):
         if not self.current_file:
             return
 
-        spec = importlib.util.spec_from_file_location("_dynamic_module", self.current_file)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        try:
+            spec = importlib.util.spec_from_file_location("_dynamic_module", self.current_file)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except FileNotFoundError:
+            return
 
         # list functions sorted by name
         for name, obj in sorted(inspect.getmembers(module, inspect.isfunction), key=lambda x: x[0]):

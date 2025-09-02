@@ -25,7 +25,7 @@ def batched(iterable, n):
 
 
 def _crop_to_valid(data):
-    valid = ~np.isnan(data)
+    valid = np.logical_and(~np.isnan(data), data != 0)
 
     if not np.any(valid):
         raise ValueError("No valid pixels!")
@@ -71,7 +71,8 @@ def stack_mask(images: Iterator, save_path: os.PathLike=None, preview=False):
         ref_image = sum(islice(images, 2))
     else:
         ref_image = sum(images)
-    mask = np.isnan(ref_image).astype(int)
+    ref_image[np.isnan(ref_image)] = 0
+    mask = (ref_image==0).astype(int)
     if save_path:
         fits.writeto(save_path, mask, overwrite=True)
         print(f'Mask saved to {save_path}')
