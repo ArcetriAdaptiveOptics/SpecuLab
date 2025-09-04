@@ -5,7 +5,7 @@ import pathos.multiprocessing as mp
 from functools import wraps
 
 import inspect
-from typing import Iterator, get_type_hints, Any, Literal
+from typing import Iterator, Iterable, get_type_hints, Any, Literal
 
 
 class StartPipe:
@@ -72,13 +72,13 @@ def classify_function(func) -> StepType:
     for i, (name, param) in enumerate(sig.parameters.items()):
         annotation = hints.get(name, Any)
         params_info.append((name, annotation, param.default))
-        # Detect if the first parameter expects an Iterator
-        if i== 0 and annotation is Iterator:
+        # Detect if the first parameter expects an Iterator or Iterable
+        if i== 0 and annotation in [Iterator, Iterable]:
             takes_iterator = True
 
     # Get return type
     ret_annotation = hints.get("return", Any)
-    returns_iterator = ret_annotation is Iterator
+    returns_iterator = ret_annotation in [Iterator, Iterable]
 
     # Determine classification
     if returns_iterator and not takes_iterator:

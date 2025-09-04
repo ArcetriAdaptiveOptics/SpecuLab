@@ -1,6 +1,6 @@
 import inspect
 import os
-from typing import get_type_hints, Iterator
+from typing import get_type_hints, Iterator, Iterable
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox,
     QVBoxLayout, QHBoxLayout, QApplication, QPushButton, QFileDialog
@@ -78,7 +78,7 @@ class FunctionForm(QWidget):
             layout.addWidget(doc_label)
 
         for i, (name, param) in enumerate(sig.parameters.items()):
-            if i == 0 and hints.get(name, None) is Iterator:
+            if i == 0 and hints.get(name, None) in [Iterator, Iterable]:
                 continue
             if i == 0 and remove_first:
                 continue
