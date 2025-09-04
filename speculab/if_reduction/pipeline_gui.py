@@ -187,6 +187,8 @@ class MainWindow(QMainWindow):
         item = QListWidgetItem()
         item.setSizeHint(step.sizeHint())
 
+        step.ask_for_resize_signal.connect(lambda: item.setSizeHint(step.sizeHint()))
+
         if row is None:
             self.step_list.addItem(item)
             self.step_list.setItemWidget(item, step)

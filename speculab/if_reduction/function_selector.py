@@ -1,10 +1,11 @@
 import os
 import inspect
 import importlib.util
+import multiprocessing as mp
 from PyQt5.QtCore import pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QComboBox,
-    QVBoxLayout, QHBoxLayout, QFileDialog, QCheckBox
+    QVBoxLayout, QHBoxLayout, QFileDialog, QCheckBox, QSpinBox
 )
 
 from pipeline_lib import classify_function
@@ -43,11 +44,23 @@ class FunctionSelector(QWidget):
         self.func_combo = QComboBox()
         self.func_combo.currentTextChanged.connect(self._on_function_selected)
 
-        self.mp_checkbox = QCheckBox("Enable multiprocessing")
+        mp_layout = QHBoxLayout()
+
+        self.mp_checkbox = QCheckBox("Multiprocessing")
+        self.mp_checkbox.stateChanged.connect(self._on_mpcheckbox_changed)
+        self.mp_number = QSpinBox()
+        self.mp_number.setRange(1, mp.cpu_count())
+        self.mp_number.setValue(8)
+
+        mp_layout.addWidget(self.mp_checkbox)
+        mp_layout.addWidget(self.mp_number)
 
         layout.addLayout(file_layout)
         layout.addWidget(self.func_combo)
-        layout.addWidget(self.mp_checkbox)
+        layout.addLayout(mp_layout)
+
+    def _on_mpcheckbox_changed(self, state):
+        self.mp_number.setEnabled(self.mp_checkbox.isChecked())
 
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select Python File", "", "Python Files (*.py)")
@@ -78,10 +91,14 @@ class FunctionSelector(QWidget):
 
     def get_state(self):
         func_name = self.func_combo.currentText()
+        if self.mp_checkbox.isChecked() and self.mp_checkbox.isVisible():
+            mp_number = self.mp_number.value()
+        else:
+            mp_number = 0
         return {
             "file": self.current_file,
             "function": func_name,
-            "mp_enabled": self.mp_checkbox.isChecked() and self.mp_checkbox.isVisible(),
+            "mp_enabled": mp_number,
         }
 
     def set_state(self, state):
@@ -126,8 +143,10 @@ class FunctionSelector(QWidget):
             ftype = classify_function(func_obj)
             if ftype in ["generic"]:
                 self.mp_checkbox.setVisible(True)
+                self.mp_number.setVisible(True)
             else:
                 self.mp_checkbox.setVisible(False)
+                self.mp_number.setVisible(False)
 
     def set_selected_function(self, func_name):
         """Sets the combo selection and emits signal."""

@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QStackedWidget,
     QSizePolicy, QDialog, QLabel
 )
+from PyQt5.QtCore import pyqtSignal
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
 from matplotlib.figure import Figure
@@ -11,6 +12,9 @@ from function_selector import FunctionSelector
 from function_form import FunctionForm
 
 class StepWidget(QWidget):
+
+    ask_for_resize_signal = pyqtSignal(object)
+
     def __init__(self, initial_file=None, parent=None):
         super().__init__(parent)
 
@@ -72,6 +76,7 @@ class StepWidget(QWidget):
         form = self.forms[func_name]
         index = self.form_stack.indexOf(form)
         self.form_stack.setCurrentIndex(index)
+        self.ask_for_resize_signal.emit(None)
 
     def _plot_to_ax(self, ax, data):
         """Helper function to plot data to a given matplotlib axis."""

@@ -1,9 +1,34 @@
 
 
+
+class StartPipe:
+    pass
+
+
+class Pipe:
+    '''
+    Functions used in pipes must be decorated with @Pipe
+    '''
+
+    def __init__(self, func):
+        self.func = func
+
+    def __ror__(self, other):
+        # "other" is the input from the left side of the pipe
+        if other is not StartPipe:
+            return self.func(other)
+        else:
+            return self.func()
+
+    def __call__(self, *args, **kwargs):
+        # Allow calling the function as usual
+        return self.func(*args, **kwargs)
+
+
 from astropy.io import fits
 import matplotlib.pyplot as plt
 
-from pipeline import StartPipe, list_all_files, cube_diff, smooth_image, calc_mask, apply_mask, crop_and_resize, threshold, stack_images
+from pipeline import list_all_files, cube_diff, smooth_image, calc_mask, apply_mask, crop_and_resize, threshold, stack_images
 from pipeline import params
 
 params.path = '/home/puglisi/cascading/alpao820if/20250829_150620*/wavefront.fits'
@@ -38,6 +63,10 @@ plt.figure()
 plt.imshow(data)
 plt.title('original')
 plt.show()
+
+
+
+
 
 
 

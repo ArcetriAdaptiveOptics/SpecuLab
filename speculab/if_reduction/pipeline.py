@@ -12,30 +12,6 @@ from skimage.transform import resize
 from typing import Iterator
 
 
-# From itertools recipes
-def batched(iterable, n):
-    "Batch data into lists of length n. The last batch may be shorter."
-    # batched('ABCDEFG', 3) --> ABC DEF G
-    it = iter(iterable)
-    while True:
-        batch = tuple(islice(it, n))
-        if not batch:
-            return
-        yield batch
-
-
-def _crop_to_valid(data):
-    valid = np.logical_and(~np.isnan(data), data != 0)
-
-    if not np.any(valid):
-        raise ValueError("No valid pixels!")
-
-    y_indices, x_indices = np.where(valid)
-    y_min, y_max = y_indices.min(), y_indices.max()
-    x_min, x_max = x_indices.min(), x_indices.max()
-
-    return data[y_min:y_max+1, x_min:x_max+1]
-
 def load_all_files(path: os.PathLike) -> Iterator:
     '''Load 2D FITS data from all filenames matching a given path pattern'''
     filelist = glob.glob(path)
@@ -51,20 +27,23 @@ def load_all_files(path: os.PathLike) -> Iterator:
                 yield data[i]
 
 
-def cube_diff(images: Iterator, preview=False) -> Iterator:
+def cube_diff(images: Iterator,
+              preview=False) -> Iterator:
     '''Given a stream of images, diff images in pairs'''
-    for up, down in batched(images, 2):
+    for up, down in _batched(images, 2):
         yield up-down
         if preview: # Only first diff for preview
             break
 
-def normalize_constant(images: Iterator, constant: float) -> Iterator:
+def normalize_constant(images: Iterator,
+                       constant: float) -> Iterator:
     '''Normalize all images by a constant value'''
     for image in images:
         yield image / constant
 
 
-def normalize_to_vector(images: Iterator, value_vector: os.PathLike) -> Iterator:
+def normalize_to_vector(images: Iterator,
+                        value_vector: os.PathLike) -> Iterator:
     '''Normalize each image by a different value'''
     norm = fits.getdata(value_vector)
     for i, image in enumerate(images):
@@ -77,7 +56,9 @@ def smooth_image(image):
     return convolve_fft(image, kernel, boundary='full', nan_treatment='interpolate')
 
 
-def stack_mask(images: Iterator, save_path: os.PathLike=None, preview=False):
+def stack_mask(images: Iterator,
+               save_path: os.PathLike=None,
+               preview=False):
     '''Sum multiple images and return common mask'''
     if preview:
         ref_image = sum(islice(images, 2))
@@ -90,14 +71,16 @@ def stack_mask(images: Iterator, save_path: os.PathLike=None, preview=False):
         print(f'Mask saved to {save_path}')
     return mask
 
-def apply_mask(image, maskpath: os.PathLike):
+def apply_mask(image,
+               maskpath: os.PathLike):
     '''mask an image'''
     mask = fits.getdata(maskpath)
     result = image * (1-mask)
     return result
 
 
-def threshold(image, th_level: float=0.1):
+def threshold(image,
+              th_level: float=0.1):
     '''Threshold an image'''
     valid = ~np.isnan(image)
     image = image - (image * valid).max() * th_level
@@ -105,7 +88,9 @@ def threshold(image, th_level: float=0.1):
     return image * positive
 
 
-def crop_and_resize(image, rows: int, cols: int):
+def crop_and_resize(image,
+                    rows: int,
+                    cols: int):
     '''Crop image to illuminated portion and resize to target shape'''
     cropped = _crop_to_valid(image)
     return resize(cropped, (rows, cols), order=3, mode="reflect", anti_aliasing=True, preserve_range=True)
@@ -135,7 +120,8 @@ def modal_base(images: Iterator,
                klbasis_save_path: os.PathLike,
                m2c_save_path: os.PathLike,
                s_save_path: os.PathLike,
-               use_cupy=True, single_precision=True):
+               use_cupy: int=1,
+               single_precision: int=1):
     '''Generate modal base'''
     if use_cupy:
         try:
@@ -152,10 +138,11 @@ def modal_base(images: Iterator,
     from specula.lib.modal_base_generator import make_modal_base_from_ifs_fft
 
     dtype = xp.float32 if single_precision else xp.float64
-    ifunc = xp.stack(map(xp.array(images))).astype(dtype)
-    mask = (ifunc.sum(axis=0) != 0).astype(dtype)
+    ifunc = xp.stack(map(xp.array, images)).astype(dtype)
+    mask = ifunc.sum(axis=0) != 0
     ifunc2d = ifunc[:, mask]
 
+    print('Starting modal base calculation...')
     klbasis, m2c, s = make_modal_base_from_ifs_fft(mask,
                                                    diameter=tel_diameter_in_m,
                                                    influence_functions=ifunc2d,
@@ -164,8 +151,37 @@ def modal_base(images: Iterator,
                                                    zern_modes=zern_modes,
                                                    xp=xp, dtype=dtype)
 
-    fits.writeto(klbasis_save_path, cpuArray(klbasis))
-    fits.writeto(m2c_save_path, cpuArray(m2c))
-    fits.writeto(s_save_path, cpuArray(s))
+    fits.writeto(klbasis_save_path, cpuArray(klbasis), overwrite=True)
+    fits.writeto(m2c_save_path, cpuArray(m2c), overwrite=True)
+    fits.writeto(s_save_path, cpuArray(s['S1']), overwrite=True)
+    fits.append(s_save_path, cpuArray(s['S2']))
 
+
+##################
+# HELPER FUNCTIONS
+##################
+
+# From itertools recipes
+def _batched(iterable, n):
+    "Batch data into lists of length n. The last batch may be shorter."
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    it = iter(iterable)
+    while True:
+        batch = tuple(islice(it, n))
+        if not batch:
+            return
+        yield batch
+
+
+def _crop_to_valid(data):
+    valid = np.logical_and(~np.isnan(data), data != 0)
+
+    if not np.any(valid):
+        raise ValueError("No valid pixels!")
+
+    y_indices, x_indices = np.where(valid)
+    y_min, y_max = y_indices.min(), y_indices.max()
+    x_min, x_max = x_indices.min(), x_indices.max()
+
+    return data[y_min:y_max+1, x_min:x_max+1]
 

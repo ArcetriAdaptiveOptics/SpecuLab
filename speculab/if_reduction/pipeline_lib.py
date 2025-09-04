@@ -29,7 +29,7 @@ class Pipe:
         return self.func(*args, **kwargs)
 
 
-def parallel_yield(processes=None, chunksize=1):
+def parallel_yield(processes=8, chunksize=1):
     """
     Decorator to run a function in parallel inside a pipeline.
     Can be used without arguments, or with the processes and chunksize arguments
@@ -99,6 +99,12 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False,
                  progress_callback=None):
     '''Run a sequence of functions as a pipeline
 
+    Functions are classified as either sources, sink, or transforms/generic. If they
+    aren't generators, they are wrapped with "wrap_as_generator()".
+
+    Pipelines must begin with a source function and may end with a sink, although the latter
+    is not enforced. Intermediate generators are added for regular callbacks.
+
     Parameters:
     func_list: list of functions to run in sequence
     params_dicts: list of dicts with parameters for each function
@@ -125,22 +131,26 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False,
         elif func_type == 'sink' and gen is None:
                 raise ValueError(f"Sink function {func.__name__} requires an input generator.")
 
-        # Apply multiprocesing if enabled, whcih makes the function a generator as a side-effect
-        if flags.get('mp_enabled', False):
-            f = parallel_yield()(func)
+        # Apply multiprocesing if enabled, which makes the function a generator as a side-effect
+        mp_number = flags.get("mp_enabled", False)
+        if mp_number:
+            f = parallel_yield(processes=mp_number)(func)
         elif func_type == 'generic':
             f = wrap_as_generator(func)
         else:
             f = func
 
         if func_type == 'source':
-            gen = f(**params)
+            gen = f(**params)          # Sources are the initial generator
         elif func_type == 'transform':
             gen = f(gen, **params)
         elif func_type == 'generic':
             gen = f(gen, **params)
         elif func_type == 'sink':
-            output = f(gen, **params)  # This will consume the generator
+            output = f(gen, **params)  # Sinks will consume the generator
+            # Call callbacks manually since the pipeline ends here
+            if progress_callback:
+                progress_callback({func: 1})
             if callback:
                 callback({func: output})
             return output
@@ -155,7 +165,7 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False,
             #         yield item
             # gen = call_the_callback(gen, func)
 
-            # Callback only on the first item of each step
+            # Preview callback only on the first item of each step
             gen, preview_gen = tee(gen)
             callback({func: list(islice(preview_gen, 1))[0] if func_type != 'source' else None})
 
