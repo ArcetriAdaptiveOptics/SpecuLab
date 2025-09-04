@@ -111,7 +111,9 @@ def crop_and_resize(image, rows: int, cols: int):
     return resize(cropped, (rows, cols), order=3, mode="reflect", anti_aliasing=True, preserve_range=True)
 
 
-def stack_images(images: Iterator, save_path: os.PathLike=None, preview=False):
+def stack_images(images: Iterator,
+                 save_path: os.PathLike=None,
+                 preview=False) -> Iterator:
     '''Stack images into a 3D array and optionally save them'''
     stack = []
     for i, image in enumerate(images):
