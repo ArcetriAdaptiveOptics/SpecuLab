@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QStackedWidget,
-    QSizePolicy, QDialog
+    QSizePolicy, QDialog, QLabel
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
@@ -37,6 +37,11 @@ class StepWidget(QWidget):
         self.form_stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         layout.addWidget(self.form_stack)
 
+        # Progress meter
+        self.progress = QLabel(self)
+        self.set_progress(0)
+        layout.addWidget(self.progress)
+
         # Matplotlib preview
         self.figure = Figure(figsize=(1, 1))
         self.canvas = FigureCanvas(self.figure)
@@ -51,6 +56,9 @@ class StepWidget(QWidget):
         """
         self.figure.clf()
         self.canvas.draw()
+
+    def set_progress(self, progress):
+        self.progress.setText(f"Progress: {progress}")
 
     def _on_function_selected(self, func_name, func_obj):
         if func_obj is None:

@@ -9,7 +9,7 @@ from astropy.convolution import convolve_fft, Gaussian2DKernel
 from skimage.transform import resize
 
 
-from typing import Iterator, Iterable
+from typing import Iterator
 
 
 # From itertools recipes

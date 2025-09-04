@@ -94,7 +94,9 @@ def classify_function(func) -> StepType:
     return ftype
 
 
-def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=None, check_interrupt_callback=None):
+def run_pipeline(func_list, params_dicts, flag_list, preview=False,
+                 callback=None, check_interrupt_callback=None,
+                 progress_callback=None):
     '''Run a sequence of functions as a pipeline
 
     Parameters:
@@ -104,6 +106,7 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=Non
     preview: if True, pass preview=True to functions that support it
     callback: function to call after each step with the current output (e.g. for UI updates)
     check_interrupt_callback: function to call to check if the pipeline should be interrupted
+    progress_callback: function to call at regular intervals to report progress
     '''
     gen = None
 
@@ -164,6 +167,15 @@ def run_pipeline(func_list, params_dicts, flag_list, preview=False, callback=Non
                         break
                     yield item
             gen = check_callback(gen)
+
+        if progress_callback:
+            def call_progress_callback(stream, fobj):
+                counter = 0
+                for item in stream:
+                    counter += 1
+                    progress_callback({fobj: counter})
+                    yield item
+            gen = call_progress_callback(gen, func)
 
     if gen is not None:
         print("Warning: Pipeline ended without a sink function. Consuming remaining generator.")

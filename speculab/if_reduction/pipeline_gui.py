@@ -60,6 +60,7 @@ class FunctionRunner(QThread):
 class MainWindow(QMainWindow):
 
     callback_signal = pyqtSignal(dict)
+    progress_signal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -147,6 +148,7 @@ class MainWindow(QMainWindow):
         self.stderr_stream.textWritten.connect(self._append_log)
 
         self.callback_signal.connect(self._update_step_previews)
+        self.progress_signal.connect(self._update_progress)
         # Start with one default step
         self.add_step()
         self._append_log('Pipeline editor initialized.\n')
@@ -319,6 +321,22 @@ class MainWindow(QMainWindow):
 
         return funcs, args_list, flag_list
 
+    def progress_callback(self, progress_info):
+        self.progress_signal.emit(progress_info)
+
+    def _update_progress(self, progress_info):
+
+        for i in range(self.step_list.count()):
+            item = self.step_list.item(i)
+            step = self.step_list.itemWidget(item)
+            if step is None:
+                continue
+
+            state = step.function_selector.get_state()
+            func_obj = step.function_selector.get_function_object(state["function"])
+            if func_obj in progress_info:
+                step.set_progress(progress_info[func_obj])
+
     def update_step_previews(self, preview_results):
         """
         Update the preview plots for each step based on function objects.
@@ -348,7 +366,8 @@ class MainWindow(QMainWindow):
         func_list, args_list, flag_list = window.get_pipeline_functions_and_args()
         run_pipeline(func_list, args_list, flag_list, preview=preview,
                      callback=self.update_step_previews,
-                     check_interrupt_callback=self.check_interrupt_callback)
+                     check_interrupt_callback=self.check_interrupt_callback,
+                     progress_callback=self.progress_callback)
 
     def run_preview(self):
         """Run the pipeline preview using the background runner."""
