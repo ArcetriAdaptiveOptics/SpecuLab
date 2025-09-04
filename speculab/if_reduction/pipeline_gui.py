@@ -3,9 +3,9 @@ import yaml
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QListWidget, QListWidgetItem,
     QToolBar, QAction, QFileDialog, QPushButton, QWidget,
-    QVBoxLayout, QTextEdit, QSizePolicy
+    QVBoxLayout, QTextEdit, QSizePolicy, QSplitter
 )
-from PyQt5.QtCore import QObject, pyqtSignal, QThread
+from PyQt5.QtCore import QObject, pyqtSignal, QThread, Qt
 import PyQt5.QtGui as QtGui
 from pipeline_lib import run_pipeline
 
@@ -73,8 +73,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
 
     def _build_ui(self):
-        central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
+        splitter = QSplitter(Qt.Vertical)
 
         # List of steps
         self.step_list = QListWidget()
@@ -84,9 +83,12 @@ class MainWindow(QMainWindow):
         size_policy.setVerticalPolicy(QSizePolicy.Expanding)
         self.step_list.setSizePolicy(size_policy)
         
-        layout.addWidget(self.step_list)
+        splitter.addWidget(self.step_list)
 
         # Run buttons
+        bottom = QWidget()
+        layout = QVBoxLayout()
+        bottom.setLayout(layout)
         self.run_preview_btn = QPushButton("Run Preview")
         self.run_pipeline_btn = QPushButton("Run Pipeline")
         self.run_preview_btn.clicked.connect(self.run_preview)
@@ -99,7 +101,16 @@ class MainWindow(QMainWindow):
         self.interrupt_btn.clicked.connect(self._interrupt_pipeline)
         layout.addWidget(self.interrupt_btn)
 
-        self.setCentralWidget(central_widget)
+        # Add log text widget at the bottom
+        self.log_widget = QTextEdit()
+        self.log_widget.setReadOnly(True)
+        layout.addWidget(self.log_widget)
+
+        splitter.addWidget(bottom)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
+
+        self.setCentralWidget(splitter)
 
         # Toolbar
         toolbar = QToolBar("Toolbar")
@@ -132,14 +143,6 @@ class MainWindow(QMainWindow):
         redo_action = QAction("Redo", self)
         redo_action.triggered.connect(self.redo)
         toolbar.addAction(redo_action)
-
-        # Add log text widget at the bottom
-        self.log_widget = QTextEdit()
-        self.log_widget.setReadOnly(True)
-        layout.addWidget(self.log_widget)
-
-        layout.setStretchFactor(self.step_list, 3)
-        layout.setStretchFactor(self.log_widget, 1)
 
         # Create streams
         self.stdout_stream = EmittingStream()
