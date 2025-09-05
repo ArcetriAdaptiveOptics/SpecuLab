@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import yaml
 from PyQt5.QtWidgets import (

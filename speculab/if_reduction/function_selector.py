@@ -120,6 +120,11 @@ class FunctionSelector(QWidget):
             spec.loader.exec_module(module)
         except FileNotFoundError:
             return
+        except Exception as e:
+            print(f"Exception: {e}")
+            import traceback
+            traceback.print_exc()
+            return
 
         # list functions sorted by name
         for name, obj in sorted(inspect.getmembers(module, inspect.isfunction), key=lambda x: x[0]):
