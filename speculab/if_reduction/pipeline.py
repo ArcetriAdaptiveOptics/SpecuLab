@@ -3,13 +3,14 @@
 from itertools import islice
 import os
 import glob
+from typing import Iterator
+
 import numpy as np
 from astropy.io import fits
 from astropy.convolution import convolve_fft, Gaussian2DKernel
-from skimage.transform import resize
+from skimage.transform import resize # pylint: disable=no-name-in-module
 
 
-from typing import Iterator
 
 
 def load_all_files(path: os.PathLike,
@@ -65,14 +66,13 @@ def smooth_image(image):
 
 def stack_mask(images: Iterator,
                save_path: os.PathLike=None,
-               masked_is_nan: bool=True,
                preview=False):
     '''Sum multiple images and return common mask'''
     if preview:
         ref_image = sum(islice(images, 2))
     else:
         ref_image = sum(images)
-    mask = (ref_image==0).astype(int)
+    mask = (ref_image==0 or np.isnan(ref_image)).astype(int) 
     fits.writeto('/tmp/test.fits', ref_image, overwrite=True)
     if save_path:
         fits.writeto(save_path, mask, overwrite=True)
@@ -123,25 +123,42 @@ def stack_images(images: Iterator,
 def hadamard_to_zonal(images: Iterator,
                       cmd_matrix_path: os.PathLike,
                       zonal_im_path: os.PathLike) -> Iterator:
-
+    '''
+    Convert an Hadamard IM measurement to zonal IM
+    '''
     hadamard = np.stack(list(images))
-    reshape = False
+    orig_shape = None
     if hadamard.ndim == 3:
-        reshape = True
         orig_shape = hadamard.shape
         hadamard = hadamard.reshape((len(hadamard), hadamard.shape[1] * hadamard.shape[2]))
     cmd = fits.getdata(cmd_matrix_path)
     print(hadamard.shape, cmd.shape)
     zonal = np.linalg.pinv(cmd) @ hadamard
 
-    if reshape:
+    if orig_shape is not None:
         zonal = zonal.reshape(orig_shape)
-    
 
     fits.writeto(zonal_im_path, zonal, overwrite=True)
     for image in zonal:
         yield image
 
+def select_images(images: Iterator,
+                  relative_peak_th: float=0.1,) -> Iterator:
+    '''
+    Zero out low-signal images
+    
+    Zero out image swhose total signal is lower
+    than the threshold wrt the highest one.
+    '''
+    cube = np.stack(list(images))
+    max_peak = max(np.max(abs(cube), axis=(1,2)))
+
+    for image in cube:
+        print(f'{max_peak=} this image={np.max(abs(image))} selected={np.max(abs(image)) >= max_peak * relative_peak_th}')
+        if np.max(abs(image)) >= max_peak * relative_peak_th:
+            yield image
+        else:
+            yield image * 0
 
 def modal_base(images: Iterator,
                tel_diameter_in_m: float,
@@ -179,15 +196,21 @@ def modal_base(images: Iterator,
     ifunc2d = ifunc[:, mask]
 
     print(f'{ifunc.shape=} {mask.shape=} {ifunc2d.shape=}')
+    nonzero_acts = np.where(np.sum(ifunc2d, axis=1))[0]
 
-    print('Starting modal base calculation...')
-    klbasis, m2c, s = make_modal_base_from_ifs_fft(mask,
+    print(f'Starting modal base calculation with {len(nonzero_acts)} valid IFs...')
+    klbasis, m2c_reduced, s = make_modal_base_from_ifs_fft(mask,
                                                    diameter=tel_diameter_in_m,
-                                                   influence_functions=ifunc2d,
+                                                   influence_functions=ifunc2d[nonzero_acts],
                                                    r0=r0_in_m,
                                                    L0=L0_in_m,
                                                    zern_modes=zern_modes,
                                                    xp=xp, dtype=dtype)
+    
+    print(f'Result shape: {klbasis.shape=} {m2c_reduced.shape=}')
+
+    m2c = xp.zeros_like(m2c_reduced, shape=(len(nonzero_acts), m2c_reduced.shape[1]))
+    m2c[nonzero_acts, :] = m2c_reduced
 
     fits.writeto(klbasis_save_path, cpuArray(klbasis), overwrite=True)
     fits.writeto(m2c_save_path, cpuArray(m2c), overwrite=True)
@@ -197,8 +220,7 @@ def modal_base(images: Iterator,
     print(f'{len(klbasis)=} {mask.shape=}')
     klbasis_3d = np.zeros((len(klbasis), mask.shape[0], mask.shape[1]))
     mask = cpuArray(mask)
-    for mode in range(len(klbasis)):
-        klbasis_3d[mode][mask] = cpuArray(klbasis[mode])
+    klbasis_3d[:, mask] = cpuArray(klbasis)
 
     basepath, ext = os.path.splitext(klbasis_save_path)
     fits.writeto(basepath + '_3d' + ext, klbasis_3d, overwrite=True)
