@@ -5,9 +5,9 @@ from shutil import rmtree
 
 from setuptools import setup, Command
 
-NAME = 'specuLab'
+NAME = 'speculab'
 DESCRIPTION = 'Lab modules for SPECULA'
-URL = 'https://github.com/ArcetriAdaptiveOptics/specuLab'
+URL = 'https://github.com/ArcetriAdaptiveOptics/speculab'
 EMAIL = 'alfio.puglisi@inaf.it'
 AUTHOR = 'Alfio Puglisi, Marco Bonaglia, INAF Arcetri Adaptive Optics group'
 LICENSE = 'MIT'
