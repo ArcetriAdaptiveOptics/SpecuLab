@@ -2,9 +2,7 @@ from specula.base_processing_obj import BaseProcessingObj
 from specula.base_value import BaseValue
 from specula.data_objects.ifunc import IFunc
 from specula.data_objects.ifunc_inv import IFuncInv
-from specula.data_objects.electric_field import ElectricField
 from specula.connections import InputValue
-from specula.data_objects.m2c import M2C
 from specula import cpuArray
 
 import plico_dm
@@ -47,9 +45,9 @@ class PlicoDM(BaseProcessingObj):
             self.dm.set_shape(cpuArray(commands))
         else:
             ef = self.local_inputs['in_ef']
-            commands = ef.phaseInNm @ self.ifunc_ivn
+            commands = ef.phaseInNm @ self.ifunc_inv
             self.dm.set_shape(commands)
-        
+
     def post_trigger(self):
         self.outputs['out_trigger'].value = 1
         self.outputs['out_trigger'].generation_time = self.current_time
@@ -64,4 +62,4 @@ class PlicoDM(BaseProcessingObj):
             if self.ifunc is None and self.ifunc_inv is None:
                 raise ValueError('One of "ifunc" and "ifunc_inv" parameters is mandatory when the EF input is connected')
             if self.ifunc_inv is None:
-                self.ifunc_inv = self.ifunv.inverse()
+                self.ifunc_inv = self.ifunc.inverse()

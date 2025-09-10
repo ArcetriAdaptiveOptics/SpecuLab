@@ -23,7 +23,7 @@ class PlicoMotor(BaseProcessingObj):
 
         self.motor = plico_motor.motor(host, port, axis)
         self.inputs['in_position'] = InputValue(type=BaseValue, optional=True)
-        self.outputs['out_position'] = BaseValue(desc='Motor position', target_device_idx=target_device_idx)
+        self.outputs['out_position'] = BaseValue(description='Motor position', target_device_idx=target_device_idx)
 
     def trigger_code(self):
         target_pos = self.local_inputs['in_position'].value
@@ -34,6 +34,6 @@ class PlicoMotor(BaseProcessingObj):
         self.outputs['out_position'].value = curpos
 
     def post_trigger(self):
-        self.outputs['out_position'].generation_time = current_time
+        self.outputs['out_position'].generation_time = self.current_time
 
 
