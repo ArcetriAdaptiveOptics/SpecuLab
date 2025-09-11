@@ -1,0 +1,29 @@
+
+sh_subaps:
+  class: 'ShSubapCalibrator'
+  subap_on_diameter: 20
+  output_tag:        'cascading_subaps_n20_th0.5'
+  energy_th:         0.5
+  inputs:
+    in_pixels: 'detector.out_pixels'
+
+
+flat:
+  class:   FuncGenerator
+  constant: 0
+  outputs: ['output']
+
+
+main_override:
+  total_time:   0.001
+
+
+prop_override:
+  inputs:
+    common_layer_list: ['pupilstop'],
+
+
+dm_override:
+  inputs:
+    in_command: 'flat.output'
+
