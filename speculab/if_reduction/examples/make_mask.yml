@@ -1,0 +1,29 @@
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: /home/puglisi/cascading/alpao820if/zonalim_3d_runa.fits
+    load_all_files:
+      path: /home/puglisi/cascading/alpao820if/zonalim_3d_runa.fits
+  function: load_all_files
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    crop_and_resize:
+      cols: 120
+      rows: 120
+  function: crop_and_resize
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    stack_mask:
+      masked_is_nan: true
+      save_path: /home/puglisi/cascading/alpao820if/mask_runa.fits
+  function: stack_mask
+  mp_enabled: 0

@@ -1,0 +1,68 @@
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    load_all_files:
+      path: /home/puglisi/cascading/20250217_160029/IMCube.fits
+      swap_3d_axes: true
+  function: load_all_files
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    hadamard_to_zonal:
+      cmd_matrix_path: /home/puglisi/cascading/20250217_160029/cmdMatrix.fits
+      zonal_im_path: /home/puglisi/cascading/20250217_160029/zonalim_3d.fits
+    stack_mask:
+      save_path: None
+    threshold:
+      th_level: 0.01
+  function: hadamard_to_zonal
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    crop_and_resize:
+      cols: 120
+      rows: 120
+  function: crop_and_resize
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: /home/puglisi/cascading/alpao820if/mask_runa.fits
+  function: apply_mask
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    select_images:
+      relative_peak_th: 0.4
+  function: select_images
+  mp_enabled: 0
+- enabled: true
+  file: /home/puglisi/git/SpecuLab/speculab/if_reduction/pipeline.py
+  forms:
+    apply_mask:
+      maskpath: ''
+    modal_base:
+      L0_in_m: 30.0
+      klbasis_save_path: /home/puglisi/cascading/alpao820if/klbasis_runa.fits
+      m2c_save_path: /home/puglisi/cascading/alpao820if/m2c_runa.fits
+      r0_in_m: 0.2
+      s_save_path: /home/puglisi/cascading/alpao820if/s_runa.fits
+      single_precision: 1
+      tel_diameter_in_m: 8.0
+      use_cupy: 1
+      use_mask: /home/puglisi/cascading/alpao820if/mask_runa.fits
+      zern_modes: 5
+  function: modal_base
+  mp_enabled: 0
