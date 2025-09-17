@@ -1,5 +1,6 @@
 from specula.base_processing_obj import BaseProcessingObj
 from specula.base_value import BaseValue
+from specula.data_objects.electric_field import ElectricField
 from specula.data_objects.ifunc import IFunc
 from specula.data_objects.ifunc_inv import IFuncInv
 from specula.connections import InputValue
@@ -33,7 +34,7 @@ class PlicoDM(BaseProcessingObj):
         self.ifunc = ifunc
         self.ifunc_inv = ifunc_inv
         self.inputs['in_commands'] = InputValue(type=BaseValue, optional=True)
-        self.inputs['in_ef'] = InputValue(type=BaseValue, optional=True)
+        self.inputs['in_ef'] = InputValue(type=ElectricField, optional=True)
         self.outputs['out_trigger'] = BaseValue(target_device_idx=target_device_idx)
 
     def trigger_code(self):

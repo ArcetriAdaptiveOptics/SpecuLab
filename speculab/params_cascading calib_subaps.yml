@@ -9,7 +9,7 @@ sh_subaps:
 
 
 flat:
-  class:   FuncGenerator
+  class:   WaveGenerator
   constant: 0
   outputs: ['output']
 
@@ -20,10 +20,11 @@ main_override:
 
 prop_override:
   inputs:
-    common_layer_list: ['pupilstop'],
+    common_layer_list: ['pupilstop']
 
 
 dm_override:
   inputs:
     in_command: 'flat.output'
 
+remove: ['slopec', 'rec', 'control']

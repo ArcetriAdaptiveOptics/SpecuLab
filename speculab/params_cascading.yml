@@ -70,16 +70,28 @@ prop:
                         'dm.out_layer:-1']
   outputs: ['out_on_axis_source_ef']
 
+ifunc_alpao820:
+  class:             'IFunc'
+  ifunc_data:        'alpao820_zonal_im'
+  mask_data:         'alpao820_mask_ones'
+
+ifunc_inv_alpao820:
+  class:             'IFuncInv'
+  ifunc_inv_data:    'alpao820_zonal_im_inverted'
+  mask_data:         'alpao820_mask_ones'
+
+m2c_alpao820:
+  class:             'M2C'
+  m2c_data:          'alpao820_m2c'
 
 alpao820dm:
   class:             'PlicoDM'
   host:              'localhost'
   port:              7010
-  ifunc_inv:         'alpao820_ifunc_inv' 
+  ifunc_inv_ref:    'ifunc_inv_alpao820' 
   inputs:
       in_ef: 'prop.out_on_axis_source_ef'
   outputs: ['out_trigger']
-
 
 detector:
   class:             'PysilicoCamera'
@@ -92,7 +104,7 @@ detector:
 
 slopec:
   class:             'ShSlopec'  
-  pupdata_object:    'cascading_pupdata'       # tag of the pyramid WFS pupils
+  subapdata_object:  'cascading_subap'       # tag of the pyramid WFS pupils
   sn_object:         'cascading_sn'            # tag of the slope reference vector
   inputs:
     in_pixels:       'detector.out_pixels'
@@ -122,12 +134,13 @@ control:
 dm:
   class:             'DM'
   simul_params_ref:  'main'
-  ifunc:            'alpao820_ifunc'       # modes type
+  m2c_ref:           'm2c_alpao820'
+  ifunc_ref:         'ifunc_alpao820'
   nmodes:            820                   # number of modes
   height:            0                     # DM height [m]
   inputs:
       in_command: 'control.out_comm'
-  outputs:
+  outputs: ['out_layer']
 
 
 psf:
