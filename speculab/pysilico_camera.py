@@ -28,8 +28,8 @@ class PysilicoCamera(BaseProcessingObj):
         # self.outputs['out_pixels'] = Pixels(frame.shape[1], frame.shape[0],
         #                                     target_device_idx=target_device_idx)
 
-    def prepare_trigger(self):
-        super().prepare_trigger()
+    def prepare_trigger(self, t):
+        super().prepare_trigger(t)
         self.triggered = False
 
     def trigger_code(self):

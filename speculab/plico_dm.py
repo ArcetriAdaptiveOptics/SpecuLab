@@ -46,7 +46,8 @@ class PlicoDM(BaseProcessingObj):
             self.dm.set_shape(cpuArray(commands))
         else:
             ef = self.local_inputs['in_ef']
-            commands = ef.phaseInNm @ self.ifunc_inv
+            wf = ef.phaseInNm[self.ifunc_inv.idx_inf_func].flat
+            commands = wf @ self.ifunc_inv.ifunc_inv
             self.dm.set_shape(commands)
 
     def post_trigger(self):
