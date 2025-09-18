@@ -96,7 +96,9 @@ alpao820dm:
 detector:
   class:             'PysilicoCamera'
   host:              'localhost'
-  port:               7300
+  port:               7101
+  roi_topleft_xy:     [706, 682]
+  roi_bottomright_xy: [2290, 2310]
   inputs:
     in_trigger: ['alpao820dm.out_trigger']
   outputs: ['out_pixels']
@@ -162,3 +164,12 @@ data_store:
     input_list: [ 'res_ef-prop.out_on_axis_source_ef',
                   'control-control.out_comm'
                    ]
+
+pixels_disp:
+  class:             'PixelsDisplay'
+  inputs:
+    pixels: 'detector.out_pixels'
+  title:   'Pixels Display'
+  figsize: [10, 10]
+
+
