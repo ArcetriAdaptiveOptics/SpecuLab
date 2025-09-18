@@ -14,19 +14,25 @@ class PysilicoCamera(BaseProcessingObj):
     def __init__(self,
                  host: str,
                  port: int,
+                 roi_topleft_xy: tuple=None,
+                 roi_bottomright_xy: tuple=None,
                  target_device_idx=None,
                  precision=None
                 ):
         super().__init__(target_device_idx=target_device_idx, precision=precision)
 
         self.camera = pysilico.camera(host, port)
-        self.outputs['out_pixels'] = Pixels(100, 100, target_device_idx=target_device_idx)
         self.inputs['in_trigger'] = InputValue(type=BaseValue, optional=True)
         self.has_trigger = False
         self.triggered = False
-        # frame = self.camera.getFutureFrames(1).toNumpyArray()
-        # self.outputs['out_pixels'] = Pixels(frame.shape[1], frame.shape[0],
-        #                                     target_device_idx=target_device_idx)
+        self.roi = roi_topleft_xy, roi_bottomright_xy
+        if roi_topleft_xy and roi_bottomright_xy:
+            self.outputs['out_pixels'] = Pixels(roi_bottomright_xy[1]-roi_topleft_xy[1], roi_bottomright_xy[0]-roi_topleft_xy[0],
+                                                target_device_idx=target_device_idx)
+        else:
+            frame = self.camera.getFutureFrames(1).toNumpyArray()
+            self.outputs['out_pixels'] = Pixels(frame.shape[1], frame.shape[0], target_device_idx=target_device_idx)
+        
 
     def prepare_trigger(self, t):
         super().prepare_trigger(t)
@@ -37,12 +43,14 @@ class PysilicoCamera(BaseProcessingObj):
             trigger = self.local_inputs['in_trigger'].value
             trigger_time = self.local_inputs['in_trigger'].generation_time
             if trigger and trigger_time == self.current_time:
-                frame = self.camera.getFutureFrames(1)
-                self.outputs['out_pixels'].pixels[:] = frame.toNumpyArray()
+                frame = self.camera.getFutureFrames(1).toNumpyArray()
                 self.triggered = True
-            return
-        frame = self.camera.getFutureFrames(1)
-        self.outputs['out_pixels'].pixels[:] = frame.toNumpyArray()
+        else:
+            frame = self.camera.getFutureFrames(1).toNumpyArray()
+        
+        if self.roi:
+            frame = frame[self.roi[0][1]:self.roi[1][1], self.roi[0][0]:self.roi[1][0]]
+        self.outputs['out_pixels'].pixels[:] = frame
 
     def post_trigger(self):
         super().post_trigger()
