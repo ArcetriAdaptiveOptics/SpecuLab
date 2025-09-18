@@ -3,6 +3,7 @@ from specula.base_value import BaseValue
 from specula.data_objects.slopes import Slopes
 from specula.connections import InputValue
 
+import time
 import plico_interferometer
 
 
@@ -29,7 +30,11 @@ class PlicoInterferometer(BaseProcessingObj):
     def trigger_code(self):
         trigger = self.local_inputs['in_trigger'].value
         if trigger:
-            wf = self.interf.wavefront()
+            try:
+                wf = self.interf.wavefront()
+            except TimeoutError:
+                time.sleep(10)
+                wf = self.interf.wavefront()
             self.outputs['out_wavefront'].value = wf
 
             data1d = wf.filled(0).ravel()
