@@ -66,17 +66,21 @@ def smooth_image(image):
 
 def stack_mask(images: Iterator,
                save_path: os.PathLike=None,
+               save_path_valid_ones: os.PathLike=None,
                preview=False):
     '''Sum multiple images and return common mask'''
     if preview:
         ref_image = sum(islice(images, 2))
     else:
         ref_image = sum(images)
-    mask = (ref_image==0 or np.isnan(ref_image)).astype(int) 
+    mask = (np.logical_or(ref_image==0, np.isnan(ref_image))).astype(int)
     fits.writeto('/tmp/test.fits', ref_image, overwrite=True)
     if save_path:
         fits.writeto(save_path, mask, overwrite=True)
         print(f'Mask saved to {save_path}')
+    if save_path_valid_ones:
+        fits.writeto(save_path_valid_ones, 1-mask, overwrite=True)
+        print(f'Mask saved to {save_path_valid_ones} with 1 on valid pixels')
     return mask
 
 def apply_mask(image,
@@ -118,6 +122,29 @@ def stack_images(images: Iterator,
     if save_path:
         fits.writeto(save_path, stack, overwrite=True)
         print(f'Stack saved to {save_path}')    
+
+
+def save_zonal_ifunc(images: Iterator,
+                     use_mask: os.PathLike=None,
+                     save_path: os.PathLike=None,
+                     inv_save_path: os.PathLike=None,
+                  ) -> Iterator:
+    '''Stack images to save a vectorized array (IM-like) and optional inverse'''
+    mask = fits.getdata(use_mask)
+    stack = []
+    for i, image in enumerate(images):
+        stack.append(image)
+        yield image
+    stack = np.stack(stack)
+    valid_idx = np.where((1-mask).flat)
+    stack = stack.reshape(len(stack), stack.shape[1] * stack.shape[2])
+    ifunc = stack[:, valid_idx[0]]
+    if save_path:
+        fits.writeto(save_path, ifunc, overwrite=True)
+        print(f'Zonal IFunc saved to {save_path}')
+    if inv_save_path:
+        fits.writeto(inv_save_path, np.linalg.pinv(ifunc), overwrite=True)
+        print(f'Inverted IFunc saved to {inv_save_path}')
 
 
 def hadamard_to_zonal(images: Iterator,
