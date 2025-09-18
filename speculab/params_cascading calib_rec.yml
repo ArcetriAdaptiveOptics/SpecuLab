@@ -1,23 +1,15 @@
 
-sh_subaps:
-  class: 'ShSubapCalibrator'
-  subap_on_diameter: 20
-  output_tag:        'cascading_subaps_n20_th0.5'
-  energy_th:         0.5
-  inputs:
-    in_pixels: 'detector.out_pixels'
-
-
 pushpull:
   class: 'PushPullGenerator'
-  nmodes: 819
-  amp:    1e-7
-  nsampes: 5
+  ncycles: 1
+  nmodes:  754
+  amp:     0.2
+  nsamples: 1
   outputs: ['output']
 
 
 main_override:
-  total_time:   1.638
+  total_time:   1.508
 
 
 prop_override:
@@ -33,19 +25,21 @@ dm_override:
 
 im_calibrator:
   class: 'ImCalibrator'
-  nmodes: 819
+  nmodes: 754
   im_tag:     'cascading_im'
   overwrite: True
   inputs:
     in_slopes: 'slopec.out_slopes'
     in_commands: 'pushpull.output'
-  outputs: ['out_im','out_intmat']
+  outputs: ['out_intmat']
 
 
 rec_calibrator:
   class: 'RecCalibrator'
-  nmodes: 819
+  nmodes: 754
   rec_tag:     'cascading_rec'
   overwrite: True
   inputs:
-    in_intmat: 'im_calibrator.out_intmat
+    in_intmat: 'im_calibrator.out_intmat'
+
+remove: ['rec', 'control']

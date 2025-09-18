@@ -106,15 +106,15 @@ detector:
 
 slopec:
   class:             'ShSlopec'  
-  subapdata_object:  'cascading_subap'       # tag of the pyramid WFS pupils
-  sn_object:         'cascading_sn'            # tag of the slope reference vector
+  subapdata_object:  'cascading_subaps'       # tag of the pyramid WFS pupils
+  sn_object:         null
   inputs:
     in_pixels:       'detector.out_pixels'
   outputs: ['out_slopes']
 
 rec:
   class:              'Modalrec'  
-  recmat_object:      'cascading_recmat'         # reconstruction matrix tag
+  recmat_object:      'cascading_rec'         # reconstruction matrix tag
   inputs:
     in_slopes:        'slopec.out_slopes'
   outputs: ['out_modes']
@@ -172,4 +172,9 @@ pixels_disp:
   title:   'Pixels Display'
   figsize: [10, 10]
 
+slopec_disp:
+  class:             'SlopecDisplay'
+  inputs:
+    slopes: 'slopec.out_slopes'
+  figsize: [8, 6]
 
