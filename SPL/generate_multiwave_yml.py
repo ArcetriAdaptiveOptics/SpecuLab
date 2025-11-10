@@ -11,7 +11,7 @@ def generateMultiwaveYml(initial_wavelength, final_wavelength, wavelength_step, 
     wavelength_step (int): The step size for wavelength increments (in nm).
     output_file (str): The file path where the YAML content will be saved.
     """
-    system_Fn = 84.77  # System F-number
+    system_Fn = 100.8  # System F-number
     pixel_size = 4.5  # Pixel size in microns
     wavelengths = list(range(initial_wavelength, final_wavelength + 1, wavelength_step))  # Convert to list
     nd_array = np.array(wavelengths) * system_Fn / 1000 / pixel_size  # Calculate the ND array
@@ -25,14 +25,14 @@ def generateMultiwaveYml(initial_wavelength, final_wavelength, wavelength_step, 
 main:
   root_dir:          '.\\calib'
   pixel_pupil:       80
-  pixel_pitch:       1e-04
+  pixel_pitch:       8.375e-05
   total_time:        2401.0
   time_step:         1.0
   display_server:    false
 
 pupilstop:
   class: 'Pupilstop'
-  input_mask_data: 'mask80_g0125_0deg'
+  input_mask_data: 'mask_g0150_0deg'
   
 ramp:
   class: 'FuncGenerator'
@@ -44,7 +44,7 @@ on_axis_source:
   class:             'Source'
   polar_coordinate:  [0.0, 0.0]
   magnitude:         8
-  wavelengthInNm:    500
+  wavelengthInNm:    600
 
 prop:
   class: 'AtmoPropagation'
@@ -75,6 +75,7 @@ dm:
             f.write(f"  wavelengthInNm: {wl}\n")
             f.write(f"  nd: {nd_array[idx]:.6f}\n")  
             f.write(f"  start_time: 0.\n")
+            f.write(f"  roi_pixels: 150\n")
             f.write(f"  inputs:\n")
             f.write(f"      in_ef: 'prop.out_on_axis_source_ef'\n")
             f.write(f"  outputs: ['out_psf']\n")
@@ -83,7 +84,8 @@ dm:
         # Data store section
         f.write("\ndata_store:\n")
         f.write("  class: 'DataStore'\n")
-        f.write("  store_dir: 'G:/Shared drives/PNRR-OAA/STILES/WP5000/Integration/SPL/Specula'\n")  
+        #f.write("  store_dir: 'G:/Shared drives/PNRR-OAA/STILES/WP5000/Integration/SPL/Specula'\n")  
+        f.write("  store_dir: 'D:/Data/SPL_Data'\n")
         f.write("  inputs:\n")
         f.write("    input_list: [\n")
         for wl in wavelengths:

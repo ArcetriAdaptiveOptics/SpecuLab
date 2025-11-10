@@ -1,0 +1,19 @@
+name: speculab-spl
+channels:
+  - conda-forge
+channel_priority: strict
+dependencies:
+  - python>=3.8
+  - numpy>=1.20.0
+  - astropy>=5.0.0
+  - matplotlib>=3.5.0
+  - tqdm>=4.64.0
+  - scipy>=1.9.0
+  - scikit-image>=0.19.0
+  - pycairo  # Install from conda-forge to avoid build issues on Windows
+  - pip
+  - pip:
+    # Add specula package here if available via pip
+    # Otherwise install manually after environment creation
+    # - specula
+

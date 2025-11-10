@@ -4,14 +4,14 @@
 main:
   root_dir:          '.\calib'
   pixel_pupil:       80
-  pixel_pitch:       1e-04
+  pixel_pitch:       8.375e-05
   total_time:        2401.0
   time_step:         1.0
   display_server:    false
 
 pupilstop:
   class: 'Pupilstop'
-  input_mask_data: 'mask80_g0125_0deg'
+  input_mask_data: 'mask_g0150_0deg'
   
 ramp:
   class: 'FuncGenerator'
@@ -23,7 +23,7 @@ on_axis_source:
   class:             'Source'
   polar_coordinate:  [0.0, 0.0]
   magnitude:         8
-  wavelengthInNm:    500
+  wavelengthInNm:    600
 
 prop:
   class: 'AtmoPropagation'
@@ -48,8 +48,9 @@ dm:
 psf720:
   class: 'PSF'
   wavelengthInNm: 720
-  nd: 13.563200
+  nd: 16.128000
   start_time: 0.
+  roi_pixels: 150
   inputs:
       in_ef: 'prop.out_on_axis_source_ef'
   outputs: ['out_psf']
@@ -57,8 +58,9 @@ psf720:
 psf725:
   class: 'PSF'
   wavelengthInNm: 725
-  nd: 13.657389
+  nd: 16.240000
   start_time: 0.
+  roi_pixels: 150
   inputs:
       in_ef: 'prop.out_on_axis_source_ef'
   outputs: ['out_psf']
@@ -66,8 +68,9 @@ psf725:
 psf730:
   class: 'PSF'
   wavelengthInNm: 730
-  nd: 13.751578
+  nd: 16.352000
   start_time: 0.
+  roi_pixels: 150
   inputs:
       in_ef: 'prop.out_on_axis_source_ef'
   outputs: ['out_psf']
@@ -75,7 +78,7 @@ psf730:
 
 data_store:
   class: 'DataStore'
-  store_dir: 'G:/Shared drives/PNRR-OAA/STILES/WP5000/Integration/SPL/Specula'
+  store_dir: 'D:/Data/SPL_Data'
   inputs:
     input_list: [
       'psf720-psf720.out_psf',
