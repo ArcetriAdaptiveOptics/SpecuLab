@@ -100,6 +100,71 @@ pip install cupy-cuda12x
 
 ### **Steps to Calibrate SPL with SPECULA**
 
+#### **Option A: Using the GUI (Recommended for Beginners)**
+
+A graphical user interface (GUI) built with tkinter is available to simplify the entire calibration workflow. The GUI provides a tabbed interface that guides you through each step with input validation, file browsers, and real-time feedback.
+
+**Launching the GUI:**
+
+```powershell
+# From the SPL directory
+python gui/run_gui.py
+```
+
+**GUI Features:**
+
+- **Tabbed Interface**: Five tabs corresponding to each workflow step
+- **Input Validation**: Automatic validation of all parameters with helpful error messages
+- **File Browsers**: Easy selection of files and folders with built-in dialogs
+- **Real-time Feedback**: Status updates and progress information
+- **Threaded Operations**: All operations run in background threads to keep the interface responsive
+- **Simulation Monitor**: Real-time output display for running simulations
+
+**Workflow Tabs:**
+
+1. **Tab 1: Create Mask**
+   - Generate circular mask with optional gap
+   - Parameters: Pixel pupil, gap fraction, clock angle, filename
+   - Output: Mask saved to `.\calib\data\`
+
+2. **Tab 2: Create IF Func (Optional)**
+   - Generate DM influence function
+   - Parameters: Pixel pupil, IF filename
+   - Output: IF function and mask piston files
+
+3. **Tab 3: Set Parameters**
+   - Configure all simulation parameters
+   - Set wavelength range, piston scan parameters, mask/IF references
+   - Configure data storage directory
+   - Generate YAML parameter file
+
+4. **Tab 4: Run Simulation**
+   - Select YAML parameter file
+   - Run SPECULA PSF simulation
+   - Monitor real-time output in the text window
+   - Option to stop simulation if needed
+   - CPU/GPU mode selection
+
+5. **Tab 5: Create Fringes**
+   - Extract fringe patterns from PSF files
+   - Auto-detect piston values from FITS files
+   - Configure output folder and extraction parameters
+   - Process all piston values automatically
+
+**GUI Requirements:**
+
+The GUI uses tkinter (included with Python) and requires the same dependencies as the command-line workflow. Make sure you have installed:
+
+```powershell
+pip install -r requirements.txt
+```
+
+**Note:** The GUI uses a non-interactive matplotlib backend to prevent blocking, so plots from mask/IF creation won't display in the GUI (but files are still saved correctly).
+
+For detailed GUI documentation, see [gui/README.md](gui/README.md).
+
+#### **Option B: Using Command Line**
+
 #### **1. Generate the Gap Mask and DM IF**
 
 Before proceeding with the calibration, you need to generate a mask for the pupil. To do this:
@@ -303,6 +368,42 @@ After completing the above steps, your output folder (`Fringes`) will contain th
 - **Incorrect Paths**: Ensure that all paths (e.g., for your PSF files, output folder, and data storage) are correct and accessible.
 
 - **Permissions Issues**: Check if you have the required permissions to read from and write to the specified directories.
+
+---
+
+## **Workflow Flowchart**
+
+```
+┌─────────────────────┐
+│   Create Mask       │
+│ (create_spl_mask.py)│
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  Create IF Func     │
+│(create_dm_ifunc.py) │
+│     (optional)      │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│ Set Piston Scan Parameters  │
+│  (generate_multiwave_yml.py)│
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────┐
+│   Run Simulation    │
+│   (runAll.ps1)      │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  Create Fringes     │
+│ (create_fringes.py) │
+└─────────────────────┘
+```
 
 ---
 

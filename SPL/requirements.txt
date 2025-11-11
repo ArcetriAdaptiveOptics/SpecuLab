@@ -5,6 +5,7 @@ matplotlib>=3.5.0
 tqdm>=4.64.0
 scipy>=1.9.0
 scikit-image>=0.19.0
+PyYAML>=5.4.0
 
 # Optional GPU acceleration (uncomment if you have CUDA-capable GPU)
 # cupy-cuda11x>=11.0.0  # For CUDA 11.x
